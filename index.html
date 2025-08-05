@@ -1,809 +1,120 @@
- <!DOCTYPE html>
-<html lang="hi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🛒 SURYANSH DIVYANSH KIRANA STORE - Complete System</title>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        
-        body {
-            font-family: 'Inter', 'Noto Sans Devanagari', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-            min-height: 100vh; color: #333; line-height: 1.6; overflow-x: hidden;
-        }
+ // Order Form Setup
+function setupOrderForm() {
+  const orderForm = document.getElementById('orderForm');
+  orderForm.addEventListener('submit', function(e) {
+    e.preventDefault();
+    submitOrder();
+  });
+}
 
-        .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
+function submitOrder() {
+  const name = document.getElementById('customerName').value.trim();
+  const phoneStr = document.getElementById('customerPhone').value.trim();
+  const address = document.getElementById('customerAddress').value.trim();
+  const items = document.getElementById('orderItems').value.trim();
 
-        /* Store Header */
-        .store-header {
-            background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(255,255,255,0.95));
-            backdrop-filter: blur(25px); border-radius: 30px; padding: 50px; text-align: center; 
-            margin-bottom: 40px; box-shadow: 0 25px 80px rgba(0,0,0,0.2);
-            border: 1px solid rgba(255,255,255,0.3);
-        }
-        
-        .store-title {
-            font-family: 'Playfair Display', serif; font-size: 4em;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            margin-bottom: 20px; font-weight: 700; letter-spacing: -2px;
-        }
+  // Validate all fields
+  if (!name || !phoneStr || !address || !items) {
+    showNotification('❌ सभी फील्ड भरें!', 'error');
+    return;
+  }
 
-        .ceo-info {
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(255,255,255,0.9));
-            border-radius: 15px; padding: 15px; margin: 15px 0;
-            border: 2px solid rgba(102, 126, 234, 0.2);
-        }
+  // Validate exactly 10-digit phone number (string)
+  if (!/^[0-9]{10}$/.test(phoneStr)) {
+    showNotification('❌ फोन नंबर 10 अंक का होना चाहिए!', 'error');
+    document.getElementById('customerPhone').focus();
+    return;
+  }
 
-        .action-buttons { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; margin-top: 35px; }
-        
-        .btn {
-            padding: 18px 35px; border: none; border-radius: 20px; font-size: 16px; 
-            font-family: inherit; font-weight: 600; cursor: pointer; transition: all 0.3s ease; 
-            text-decoration: none; display: inline-block; text-align: center;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
-        }
-        
-        .btn-call { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; }
-        .btn-whatsapp { background: linear-gradient(135deg, #25d366 0%, #128c7e 100%); color: white; }
-        .btn-order { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
-        
-        .btn:hover { transform: translateY(-4px) scale(1.02); box-shadow: 0 15px 40px rgba(0,0,0,0.25); }
+  if (!selectedPaymentMethod) {
+    showNotification('❌ पेमेंट विधि चुनें!', 'error');
+    return;
+  }
 
-        /* Products */
-        .products-section {
-            background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(255,255,255,0.95));
-            backdrop-filter: blur(25px); border-radius: 30px; padding: 40px; margin: 40px 0;
-            box-shadow: 0 25px 80px rgba(0,0,0,0.2);
-        }
-        
-        .section-title {
-            font-family: 'Playfair Display', serif; font-size: 3em;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            text-align: center; margin-bottom: 40px; font-weight: 700;
-        }
+  if (selectedPaymentMethod === 'upi') {
+    if (!selectedUpiMethod) {
+      showNotification('❌ UPI विधि चुनें (QR या Manual)!', 'error');
+      return;
+    }
+    const proofFiles = document.getElementById('paymentProof').files;
+    if (proofFiles.length === 0) {
+      showNotification('❌ पेमेंट की रसीद अपलोड करें!', 'error');
+      return;
+    }
+  }
 
-        .category-section { margin-bottom: 50px; }
-        .category-header {
-            display: flex; align-items: center; justify-content: space-between;
-            margin-bottom: 25px; padding: 20px 25px;
-            background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
-            border-radius: 15px; border: 2px solid rgba(102, 126, 234, 0.1);
-        }
-        
-        .category-title {
-            font-family: 'Playfair Display', serif; font-size: 2em; font-weight: 700;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
-        
-        .category-count {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white; padding: 10px 16px; border-radius: 12px;
-            font-weight: 700; font-size: 0.9em;
-        }
-        
-        .category-products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; }
-        
-        .product-card {
-            background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
-            border-radius: 20px; padding: 0; text-align: center;
-            transition: all 0.4s ease; border: 2px solid transparent;
-            cursor: pointer; overflow: hidden; box-shadow: 0 12px 35px rgba(0,0,0,0.1);
-        }
-        
-        .product-card:hover {
-            transform: translateY(-8px) scale(1.02);
-            box-shadow: 0 20px 50px rgba(102, 126, 234, 0.25);
-            border-color: #667eea;
-        }
-        
-        .product-image-container {
-            width: 100%; height: 200px;
-            background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%);
-            border-radius: 20px 20px 0 0; display: flex; align-items: center; justify-content: center;
-            border-bottom: 1px solid rgba(102, 126, 234, 0.1); overflow: hidden;
-        }
-        
-        .emoji-display {
-            font-size: 5em; text-shadow: 0 4px 8px rgba(0,0,0,0.1); transition: all 0.3s ease;
-        }
-        
-        .emoji-display:hover { transform: scale(1.1); }
-        
-        .product-info { padding: 20px; }
-        .product-name { font-size: 1.2em; font-weight: 700; color: #333; margin-bottom: 8px; font-family: 'Playfair Display', serif; }
-        .product-desc { color: #666; font-size: 0.85em; margin-bottom: 12px; line-height: 1.4; }
-        .product-price { font-size: 1.4em; font-weight: 800; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 15px; }
-        
-        .rating-display {
-            display: flex; align-items: center; justify-content: center; gap: 5px; margin-bottom: 15px;
-        }
-        
-        .stars {
-            color: #ffc107; font-size: 1.2em;
-        }
-        
-        .rating-text {
-            font-size: 0.9em; color: #666; font-weight: 600;
-        }
-        
-        .product-actions { display: flex; gap: 10px; margin-top: 15px; }
-        .add-to-cart-btn, .buy-now-btn { flex: 1; border: none; padding: 12px 16px; border-radius: 12px; font-size: 0.9em; font-weight: 700; cursor: pointer; transition: all 0.3s ease; font-family: inherit; }
-        .add-to-cart-btn { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
-        .buy-now-btn { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; }
-        .add-to-cart-btn:hover, .buy-now-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); }
+  const order = {
+    id: Date.now(),
+    name,
+    phone: phoneStr,         // string ही use हो रहा है
+    address,
+    items,
+    paymentMethod: selectedPaymentMethod,
+    upiMethod: selectedUpiMethod,
+    date: new Date().toLocaleString('hi-IN')
+  };
 
-        /* Payment Methods with QR Code */
-        .payment-methods {
-            margin: 30px 0; background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(255,255,255,0.95));
-            backdrop-filter: blur(25px); border-radius: 20px; padding: 25px;
-        }
+  // Save locally
+  orders.push(order);
+  localStorage.setItem('orders', JSON.stringify(orders));
 
-        .payment-title {
-            font-size: 1.5em; font-weight: 700; color: #333; margin-bottom: 20px; text-align: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-        }
+  // Send WhatsApp messages (string concat)
+  sendConfirmationMessages(order);
 
-        .payment-options { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 25px; }
+  // Reset form
+  orderForm.reset();
+  selectedPaymentMethod = null;
+  selectedUpiMethod = null;
+  qrCodeGenerated = false;
+  document.querySelectorAll('.payment-option, .upi-method').forEach(el => el.classList.remove('selected'));
+  document.getElementById('upiSection').classList.remove('show');
+  document.getElementById('codSection').classList.remove('show');
+  document.getElementById('qrCodeContainer').style.display = 'none';
+  document.getElementById('manualUpiContainer').style.display = 'none';
+  document.getElementById('screenshotUpload').style.display = 'none';
 
-        .payment-option {
-            border: 2px solid rgba(102, 126, 234, 0.2); border-radius: 15px; padding: 20px;
-            cursor: pointer; transition: all 0.3s ease; text-align: center; background: rgba(255,255,255,0.5);
-        }
+  showNotification('✅ ऑर्डर प्राप्त! WhatsApp ओपन हो रहा है...', 'success');
+}
 
-        .payment-option:hover { border-color: #667eea; transform: translateY(-3px); }
-        .payment-option.selected { border-color: #667eea; background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(255,255,255,0.9)); }
+function sendConfirmationMessages(order) {
+  const whatsappNumber = '9838660814';  // correct number as string
 
-        .payment-icon { font-size: 3em; margin-bottom: 15px; display: block; }
-        .payment-name { font-size: 1.2em; font-weight: 600; color: #333; margin-bottom: 8px; }
-        .payment-desc { color: #666; font-size: 0.9em; }
+  const paymentInfo = order.paymentMethod === 'upi'
+    ? `UPI (${order.upiMethod})`
+    : 'Cash on Delivery';
 
-        .upi-section, .cod-section {
-            display: none; margin-top: 20px; padding: 20px; border-radius: 15px;
-        }
+  const customerMsg =
+    `✅ ORDER CONFIRMED! - SURYANSH STORE\n\n` +
+    `नाम: ${order.name}\n` +
+    `फोन: ${order.phone}\n` +
+    `पता: ${order.address}\n\n` +
+    `आइटम्स:\n${order.items}\n\n` +
+    `पेमेंट: ${paymentInfo}\n` +
+    `दिनांक: ${order.date}\n\n` +
+    `धन्यवाद!`;
 
-        .upi-section { background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(255,255,255,0.9)); }
-        .cod-section { background: linear-gradient(135deg, rgba(40, 167, 69, 0.1), rgba(255,255,255,0.9)); }
-        .upi-section.show, .cod-section.show { display: block; }
+  const storeMsg =
+    `🚨 नया ऑर्डर आया!\n\n` +
+    `ID: #${order.id}\n` +
+    `नाम: ${order.name}\n` +
+    `फोन: ${order.phone}\n` +
+    `पता: ${order.address}\n\n` +
+    `आइटम्स:\n${order.items}\n\n` +
+    `पेमेंट: ${paymentInfo}\n` +
+    `दिनांक: ${order.date}\n\n` +
+    `कृपया भेज दें।`;
 
-        /* QR Code Styles */
-        .qr-container {
-            background: rgba(255,255,255,0.9); border-radius: 15px; padding: 20px; margin: 20px 0; 
-            text-align: center; border: 2px solid rgba(102, 126, 234, 0.2);
-        }
+  // Compose URLs using only string concatenation
+  const customerUrl = 
+    'https://wa.me/91' + order.phone +
+    '?text=' + encodeURIComponent(customerMsg);
 
-        .qr-code-display {
-            background: white; padding: 20px; border-radius: 15px; display: inline-block; 
-            margin: 15px 0; box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-        }
+  const storeUrl = 
+    'https://wa.me/91' + whatsappNumber +
+    '?text=' + encodeURIComponent(storeMsg);
 
-        .upi-methods {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); 
-            gap: 15px; margin: 20px 0;
-        }
-
-        .upi-method {
-            background: rgba(255,255,255,0.8); border: 2px solid rgba(102, 126, 234, 0.2); 
-            border-radius: 12px; padding: 15px; text-align: center; cursor: pointer; 
-            transition: all 0.3s ease;
-        }
-
-        .upi-method:hover { border-color: #667eea; transform: translateY(-2px); }
-        .upi-method.selected { border-color: #667eea; background: rgba(102, 126, 234, 0.1); }
-
-        /* Notifications */
-        .notification {
-            position: fixed; top: 80px; right: 20px; padding: 20px 25px;
-            border-radius: 15px; color: white; font-weight: 600; font-size: 16px;
-            max-width: 350px; z-index: 99998; transform: translateX(400px);
-            transition: all 0.3s ease; backdrop-filter: blur(10px);
-            box-shadow: 0 12px 35px rgba(0,0,0,0.3);
-        }
-        
-        .notification.success { background: linear-gradient(135deg, #28a745 0%, #20c997 100%); }
-        .notification.error { background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); }
-        .notification.info { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .notification.show { transform: translateX(0); }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .container { padding: 15px; }
-            .store-title { font-size: 2.5em; }
-            .action-buttons { grid-template-columns: 1fr; }
-            .category-products-grid { grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); }
-            .category-header { flex-direction: column; gap: 15px; text-align: center; }
-            .payment-options { grid-template-columns: 1fr; }
-            .upi-methods { grid-template-columns: 1fr; }
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <!-- Store Header with CEO Info -->
-        <div class="store-header">
-            <h1 class="store-title">🛒 SURYANSH DIVYANSH KIRANA STORE</h1>
-            <p style="font-size: 1.5em; color: #888; margin-bottom: 15px;">✨ Ultimate Complete System - सही नंबर के साथ</p>
-            <p style="font-size: 1.2em; color: #666; margin-bottom: 25px;">📍 Gurwalia, Kushinagar, UP 274302</p>
-            
-            <!-- CEO Information -->
-            <div class="ceo-info">
-                <p style="font-size: 1.1em; color: #333; font-weight: 600; margin-bottom: 5px;">👨‍💼 CEO & Founder: <strong style="color: #667eea;">Mr. Suryansh Mishra</strong></p>
-                <p style="font-size: 0.9em; color: #666;">Leading Digital Innovation in Kirana Business</p>
-            </div>
-            
-            <p style="font-size: 1.4em; color: #333; margin-bottom: 35px; font-weight: 500;">🔥 WhatsApp: 9838660814 - सब कुछ working!</p>
-            
-            <div class="action-buttons">
-                <a href="tel:+919838660814" class="btn btn-call">📞 तुरंत कॉल करें</a>
-                <a href="https://wa.me/919838660814" class="btn btn-whatsapp">💬 WhatsApp करें</a>
-                <a href="#order-form" class="btn btn-order">🛒 ऑर्डर करें</a>
-            </div>
-        </div>
-
-        <!-- Products -->
-        <div class="products-section">
-            <h2 class="section-title">📦 हमारे Premium उत्पाद</h2>
-            <div id="categoriesDisplay"></div>
-        </div>
-
-        <!-- Ultimate Order Form -->
-        <div class="products-section" id="order-form">
-            <h2 class="section-title">🛒 Ultimate Order Form</h2>
-            
-            <form id="orderForm">
-                <!-- Customer Details -->
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; margin-bottom: 25px;">
-                    <div>
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">👤 आपका नाम: *</label>
-                        <input type="text" id="customerName" required style="width: 100%; padding: 15px; border: 2px solid rgba(102, 126, 234, 0.2); border-radius: 10px; font-size: 16px;">
-                    </div>
-                    
-                    <div>
-                        <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">📞 फोन नंबर: *</label>
-                        <input type="tel" id="customerPhone" required pattern="[0-9]{10}" maxlength="10" style="width: 100%; padding: 15px; border: 2px solid rgba(102, 126, 234, 0.2); border-radius: 10px; font-size: 16px;" placeholder="10 digit mobile number">
-                    </div>
-                </div>
-                
-                <div style="margin-bottom: 25px;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">📍 पूरा पता: *</label>
-                    <textarea id="customerAddress" required style="width: 100%; padding: 15px; border: 2px solid rgba(102, 126, 234, 0.2); border-radius: 10px; font-size: 16px; min-height: 100px; resize: vertical;"></textarea>
-                </div>
-                
-                <div style="margin-bottom: 25px;">
-                    <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">📝 क्या चाहिए: *</label>
-                    <textarea id="orderItems" required placeholder="उदाहरण: बासमती चावल 1 किलो, अमुल दूध 500ml..." style="width: 100%; padding: 15px; border: 2px solid rgba(102, 126, 234, 0.2); border-radius: 10px; font-size: 16px; min-height: 120px; resize: vertical;"></textarea>
-                </div>
-
-                <!-- Ultimate Payment Methods with QR Code -->
-                <div class="payment-methods">
-                    <h3 class="payment-title">💳 Payment Method चुनें</h3>
-                    
-                    <div class="payment-options">
-                        <div class="payment-option" data-method="upi" onclick="selectPaymentMethod('upi')">
-                            <span class="payment-icon">📱</span>
-                            <div class="payment-name">UPI Payment</div>
-                            <div class="payment-desc">QR Code + Manual UPI</div>
-                        </div>
-                        
-                        <div class="payment-option" data-method="cod" onclick="selectPaymentMethod('cod')">
-                            <span class="payment-icon">💰</span>
-                            <div class="payment-name">Cash on Delivery</div>
-                            <div class="payment-desc">Pay when you receive</div>
-                        </div>
-                    </div>
-
-                    <!-- Enhanced UPI Section with QR Code -->
-                    <div class="upi-section" id="upiSection">
-                        <h4 style="color: #333; margin-bottom: 20px; text-align: center;">📱 UPI Payment Options</h4>
-                        
-                        <!-- UPI Method Selection -->
-                        <div class="upi-methods">
-                            <div class="upi-method" onclick="selectUpiMethod('qr')">
-                                <div style="font-size: 2.5em; margin-bottom: 10px;">📱</div>
-                                <div style="font-weight: 600; margin-bottom: 5px;">QR Code Scan</div>
-                                <div style="font-size: 0.8em; color: #666;">किसी भी UPI app से scan करें</div>
-                            </div>
-                            
-                            <div class="upi-method" onclick="selectUpiMethod('manual')">
-                                <div style="font-size: 2.5em; margin-bottom: 10px;">⌨️</div>
-                                <div style="font-weight: 600; margin-bottom: 5px;">Manual UPI ID</div>
-                                <div style="font-size: 0.8em; color: #666;">UPI ID manually enter करें</div>
-                            </div>
-                        </div>
-
-                        <!-- QR Code Display -->
-                        <div class="qr-container" id="qrCodeContainer" style="display: none;">
-                            <h5 style="color: #667eea; margin-bottom: 15px;">📱 QR Code से Payment करें:</h5>
-                            <div class="qr-code-display">
-                                <div id="qrcode"></div>
-                            </div>
-                            <p style="color: #333; font-weight: 600; margin-bottom: 10px;">Store UPI ID: <strong>sandhnapayday@okhdfcbank</strong></p>
-                            <p style="color: #666; font-size: 0.9em;">📱 किसी भी UPI app से scan करके instant payment करें</p>
-                        </div>
-
-                        <!-- Manual UPI Section -->
-                        <div id="manualUpiContainer" style="display: none;">
-                            <div style="background: rgba(255,255,255,0.8); border-radius: 10px; padding: 20px; margin: 20px 0;">
-                                <h5 style="color: #667eea; margin-bottom: 15px;">⌨️ Manual UPI Payment:</h5>
-                                <div style="background: #f8f9ff; padding: 15px; border-radius: 10px; margin: 15px 0; text-align: center;">
-                                    <p style="font-weight: 600; color: #333; font-size: 1.1em;">Store UPI ID:</p>
-                                    <p style="font-size: 1.3em; font-weight: 700; color: #667eea; margin: 10px 0;">sandhnapayday@okhdfcbank</p>
-                                    <button type="button" onclick="copyUpiId()" style="background: #667eea; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer;">📋 Copy UPI ID</button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Screenshot Upload -->
-                        <div id="screenshotUpload" style="display: none; margin-top: 20px;">
-                            <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #333;">📷 Payment Screenshot: *</label>
-                            <input type="file" id="paymentProof" accept="image/*" style="width: 100%; padding: 10px; border: 2px dashed rgba(102, 126, 234, 0.3); border-radius: 10px;">
-                        </div>
-                    </div>
-
-                    <!-- COD Section -->
-                    <div class="cod-section" id="codSection">
-                        <h4 style="color: #333; margin-bottom: 15px;">💰 Cash on Delivery</h4>
-                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
-                            <div style="background: rgba(255,255,255,0.8); border-radius: 10px; padding: 15px;">
-                                <h5 style="color: #28a745; margin-bottom: 10px;">✅ Available Areas:</h5>
-                                <ul style="color: #666; margin-left: 15px;">
-                                    <li>Gurwalia और nearby areas</li>
-                                    <li>Kushinagar district में</li>
-                                    <li>5 km radius के अंदर</li>
-                                </ul>
-                            </div>
-                            <div style="background: linear-gradient(135deg, #fff3cd, #ffeaa7); border-radius: 10px; padding: 15px; text-align: center;">
-                                <h5 style="color: #856404; margin-bottom: 10px;">💵 COD Charges:</h5>
-                                <p><strong>Under ₹300:</strong> ₹20 delivery charge</p>
-                                <p><strong>Above ₹300:</strong> FREE delivery</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <button type="submit" class="btn btn-order" style="width: 100%; margin-top: 30px; font-size: 18px; padding: 20px;">
-                    🚀 Order Submit करें
-                </button>
-            </form>
-        </div>
-
-        <!-- Contact Footer -->
-        <div class="products-section">
-            <h3 style="text-align: center; margin-bottom: 30px; color: #333;">📞 Complete Contact Information</h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
-                <div style="background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%); border-radius: 15px; padding: 20px; text-align: center; border: 2px solid rgba(102, 126, 234, 0.1);">
-                    <h4 style="color: #667eea; margin-bottom: 10px;">👑 Owner</h4>
-                    <p style="font-weight: 600;">Mr. Nityanand Mishra</p>
-                    <p style="color: #666;">Store Owner & Founder</p>
-                </div>
-                <div style="background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%); border-radius: 15px; padding: 20px; text-align: center; border: 2px solid rgba(102, 126, 234, 0.1);">
-                    <h4 style="color: #667eea; margin-bottom: 10px;">👨‍💼 CEO</h4>
-                    <p style="font-weight: 600;">Mr. Suryansh Mishra</p>
-                    <p style="color: #666;">Chief Executive Officer</p>
-                </div>
-                <div style="background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%); border-radius: 15px; padding: 20px; text-align: center; border: 2px solid rgba(102, 126, 234, 0.1);">
-                    <h4 style="color: #667eea; margin-bottom: 10px;">📱 WhatsApp</h4>
-                    <p style="font-weight: 600;">+91 9838660814</p>
-                    <p style="color: #666;">24/7 Available</p>
-                </div>
-                <div style="background: linear-gradient(135deg, #f8f9ff 0%, #ffffff 100%); border-radius: 15px; padding: 20px; text-align: center; border: 2px solid rgba(102, 126, 234, 0.1);">
-                    <h4 style="color: #667eea; margin-bottom: 10px;">💳 Store UPI</h4>
-                    <p style="font-weight: 600;">sandhnapayday@okhdfcbank</p>
-                    <p style="color: #666;">For Instant Payments</p>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        // सही WhatsApp नंबर के साथ Ultimate System
-        const WHATSAPP_NUMBER = '9838660814';  // आपका सही नंबर
-        
-        let orders = JSON.parse(localStorage.getItem('orders')) || [];
-        let savedCustomers = JSON.parse(localStorage.getItem('savedCustomers')) || [];
-        let selectedPaymentMethod = null;
-        let selectedUpiMethod = null;
-        let qrCodeGenerated = false;
-
-        // Enhanced Products Database with Ratings
-        let products = [
-            { id: 1, name: '🌾 बासमती चावल', desc: 'प्रीमियम क्वालिटी बासमती - Royal Quality', price: 105, category: '🌾 Grains & Pulses', stock: 30, emoji: '🌾', rating: 4.8, reviews: 156 },
-            { id: 2, name: '🥛 अमुल दूध', desc: 'ताजा गाय का दूध - 500ml Fresh', price: 35, category: '🥛 Dairy Products', stock: 50, emoji: '🥛', rating: 4.9, reviews: 203 },
-            { id: 3, name: '🧂 टाटा नमक', desc: 'आयोडीन युक्त नमक - Healthy Choice', price: 30, category: '🛢️ Oils & Spices', stock: 40, emoji: '🧂', rating: 4.7, reviews: 89 },
-            { id: 4, name: '☕ चाय पत्ती', desc: 'प्रीमियम असम चाय - Strong Flavor', price: 80, category: '☕ Tea & Coffee', stock: 35, emoji: '☕', rating: 4.6, reviews: 124 },
-            { id: 5, name: '🍪 पार्ले जी', desc: 'क्लासिक ग्लूकोस बिस्कुट - Family Pack', price: 5, category: '🍪 Snacks', stock: 200, emoji: '🍪', rating: 4.5, reviews: 312 },
-            { id: 6, name: '🧼 डेटॉल साबुन', desc: 'एंटी-बैक्टीरियल साबुन - Protection', price: 35, category: '🧼 Household', stock: 50, emoji: '🧼', rating: 4.8, reviews: 178 },
-            { id: 7, name: '🌿 पतंजलि साबुन', desc: 'प्राकृतिक हर्बल साबुन - Ayurvedic', price: 25, category: '🌿 Patanjali', stock: 60, emoji: '🌿', rating: 4.4, reviews: 95 },
-            { id: 8, name: '🍫 कैडबरी चॉकलेट', desc: 'मिल्क चॉकलेट - Sweet Delight', price: 45, category: '🍪 Snacks', stock: 75, emoji: '🍫', rating: 4.9, reviews: 267 }
-        ];
-
-        // Initialize System
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('🚀 System Loading with WhatsApp: ' + WHATSAPP_NUMBER);
-            loadProductsByCategory();
-            setupOrderForm();
-            console.log('✅ System Ready with correct WhatsApp number!');
-        });
-
-        // Load Products by Category with Ratings
-        function loadProductsByCategory() {
-            const categoriesDisplay = document.getElementById('categoriesDisplay');
-            if (!categoriesDisplay) return;
-            
-            const categorizedProducts = {};
-            products.forEach(function(product) {
-                if (!categorizedProducts[product.category]) {
-                    categorizedProducts[product.category] = [];
-                }
-                categorizedProducts[product.category].push(product);
-            });
-            
-            categoriesDisplay.innerHTML = '';
-            
-            Object.keys(categorizedProducts).forEach(function(category) {
-                const categoryProducts = categorizedProducts[category];
-                
-                const categorySection = document.createElement('div');
-                categorySection.className = 'category-section';
-                
-                categorySection.innerHTML = '\
-                    <div class="category-header">\
-                        <h3 class="category-title">' + category + '</h3>\
-                        <div class="category-count">' + categoryProducts.length + ' Products</div>\
-                    </div>\
-                    <div class="category-products-grid">\
-                        ' + categoryProducts.map(function(product) {
-                            const stars = '★'.repeat(Math.floor(product.rating)) + '☆'.repeat(5 - Math.floor(product.rating));
-                            return '\
-                                <div class="product-card">\
-                                    <div class="product-image-container">\
-                                        <div class="emoji-display">' + product.emoji + '</div>\
-                                    </div>\
-                                    <div class="product-info">\
-                                        <div class="product-name">' + product.name + '</div>\
-                                        <div class="product-desc">' + product.desc + '</div>\
-                                        <div class="rating-display">\
-                                            <span class="stars">' + stars + '</span>\
-                                            <span class="rating-text">' + product.rating + ' (' + product.reviews + ')</span>\
-                                        </div>\
-                                        <div class="product-price">₹' + product.price + '</div>\
-                                        <div style="color: #666; font-size: 0.8em; margin-bottom: 15px;">📦 Stock: ' + product.stock + '</div>\
-                                        <div class="product-actions">\
-                                            <button class="add-to-cart-btn" onclick="addToOrder(\'' + product.name.replace(/'/g, "\\'") + '\', ' + product.price + ')">🛒 Add</button>\
-                                            <button class="buy-now-btn" onclick="buyNow(\'' + product.name.replace(/'/g, "\\'") + '\', ' + product.price + ')">⚡ Buy</button>\
-                                        </div>\
-                                    </div>\
-                                </div>\
-                            ';
-                        }).join('') + '\
-                    </div>\
-                ';
-                
-                categoriesDisplay.appendChild(categorySection);
-            });
-        }
-
-        // Product Action Functions
-        function addToOrder(productName, price) {
-            const orderItems = document.getElementById('orderItems');
-            const currentItems = orderItems.value.trim();
-            const newItem = productName + ' - ₹' + price;
-            
-            if (currentItems) {
-                orderItems.value = currentItems + '\n' + newItem;
-            } else {
-                orderItems.value = newItem;
-            }
-            
-            showNotification('✅ ' + productName + ' added to order!', 'success');
-            
-            // Scroll to order form
-            document.getElementById('order-form').scrollIntoView({ behavior: 'smooth' });
-        }
-
-        function buyNow(productName, price) {
-            addToOrder(productName, price);
-            // Auto-focus on customer name field
-            setTimeout(function() {
-                document.getElementById('customerName').focus();
-            }, 500);
-        }
-
-        // Payment Method Selection
-        function selectPaymentMethod(method) {
-            selectedPaymentMethod = method;
-            
-            document.querySelectorAll('.payment-option').forEach(function(option) {
-                option.classList.remove('selected');
-            });
-            
-            document.getElementById('upiSection').classList.remove('show');
-            document.getElementById('codSection').classList.remove('show');
-            
-            document.querySelector('[data-method="' + method + '"]').classList.add('selected');
-            
-            if (method === 'upi') {
-                document.getElementById('upiSection').classList.add('show');
-                showNotification('📱 UPI Payment selected!', 'info');
-            } else if (method === 'cod') {
-                document.getElementById('codSection').classList.add('show');
-                showNotification('💰 COD selected!', 'success');
-            }
-        }
-
-        // UPI Method Selection
-        function selectUpiMethod(method) {
-            selectedUpiMethod = method;
-            
-            document.querySelectorAll('.upi-method').forEach(function(option) {
-                option.classList.remove('selected');
-            });
-            
-            document.getElementById('qrCodeContainer').style.display = 'none';
-            document.getElementById('manualUpiContainer').style.display = 'none';
-            document.getElementById('screenshotUpload').style.display = 'none';
-            
-            if (event && event.target) {
-                event.target.closest('.upi-method').classList.add('selected');
-            }
-            
-            if (method === 'qr') {
-                document.getElementById('qrCodeContainer').style.display = 'block';
-                document.getElementById('screenshotUpload').style.display = 'block';
-                generateQRCode();
-                showNotification('📱 QR Code method selected!', 'info');
-            } else if (method === 'manual') {
-                document.getElementById('manualUpiContainer').style.display = 'block';
-                document.getElementById('screenshotUpload').style.display = 'block';
-                showNotification('⌨️ Manual UPI method selected!', 'info');
-            }
-        }
-
-        // Generate QR Code
-        function generateQRCode() {
-            if (qrCodeGenerated) return;
-            
-            try {
-                document.getElementById('qrcode').innerHTML = '';
-                
-                var qrcode = new QRCode(document.getElementById('qrcode'), {
-                    text: 'upi://pay?pa=sandhnapayday@okhdfcbank&pn=SURYANSH%20DIVYANSH%20KIRANA%20STORE&cu=INR',
-                    width: 200,
-                    height: 200,
-                    colorDark: '#000000',
-                    colorLight: '#ffffff',
-                    correctLevel: QRCode.CorrectLevel.H
-                });
-                
-                qrCodeGenerated = true;
-                showNotification('✅ QR Code generated!', 'success');
-            } catch (error) {
-                console.error('QR Code generation error:', error);
-                showNotification('❌ QR Code generation failed. Use manual UPI ID', 'error');
-            }
-        }
-
-        // Copy UPI ID function
-        function copyUpiId() {
-            var upiId = 'sandhnapayday@okhdfcbank';
-            
-            if (navigator.clipboard) {
-                navigator.clipboard.writeText(upiId).then(function() {
-                    showNotification('✅ UPI ID copied to clipboard!', 'success');
-                }).catch(function() {
-                    fallbackCopyTextToClipboard(upiId);
-                });
-            } else {
-                fallbackCopyTextToClipboard(upiId);
-            }
-        }
-
-        function fallbackCopyTextToClipboard(text) {
-            var textArea = document.createElement('textarea');
-            textArea.value = text;
-            document.body.appendChild(textArea);
-            textArea.focus();
-            textArea.select();
-            
-            try {
-                var successful = document.execCommand('copy');
-                if (successful) {
-                    showNotification('✅ UPI ID copied!', 'success');
-                } else {
-                    showNotification('❌ Copy failed. Please copy manually: ' + text, 'error');
-                }
-            } catch (err) {
-                showNotification('❌ Copy failed. Please copy manually: ' + text, 'error');
-            }
-            
-            document.body.removeChild(textArea);
-        }
-
-        // Order Form Setup with Proper Validation
-        function setupOrderForm() {
-            var orderForm = document.getElementById('orderForm');
-            if (orderForm) {
-                orderForm.addEventListener('submit', function(e) {
-                    e.preventDefault();
-                    submitOrder();
-                });
-            }
-        }
-
-        function submitOrder() {
-            var name = document.getElementById('customerName').value.trim();
-            var phone = document.getElementById('customerPhone').value.trim();
-            var address = document.getElementById('customerAddress').value.trim();
-            var items = document.getElementById('orderItems').value.trim();
-            
-            // Validate all required fields
-            if (!name || !phone || !address || !items) {
-                showNotification('❌ All fields required!', 'error');
-                return;
-            }
-            
-            // Validate phone number - Must be exactly 10 digits
-            var phoneRegex = /^[0-9]{10}$/;
-            if (!phoneRegex.test(phone)) {
-                showNotification('❌ Phone number must be exactly 10 digits!', 'error');
-                document.getElementById('customerPhone').focus();
-                return;
-            }
-            
-            if (!selectedPaymentMethod) {
-                showNotification('❌ Select payment method!', 'error');
-                return;
-            }
-
-            if (selectedPaymentMethod === 'upi') {
-                if (!selectedUpiMethod) {
-                    showNotification('❌ Select UPI payment method (QR or Manual)!', 'error');
-                    return;
-                }
-                
-                var paymentProof = document.getElementById('paymentProof').files;
-                if (paymentProof.length === 0) {
-                    showNotification('❌ Payment screenshot required for UPI payment!', 'error');
-                    return;
-                }
-            }
-
-            var order = {
-                id: Date.now(),
-                name: name,
-                phone: phone,
-                address: address,
-                items: items,
-                paymentMethod: selectedPaymentMethod,
-                upiMethod: selectedUpiMethod,
-                status: 'confirmed',
-                date: new Date().toLocaleString('hi-IN')
-            };
-            
-            orders.push(order);
-            localStorage.setItem('orders', JSON.stringify(orders));
-            
-            // Save customer data
-            saveCustomerData({ name: name, phone: phone, address: address });
-            
-            // Send messages with CORRECT phone number
-            sendConfirmationMessages(order);
-
-            // Reset form
-            resetForm();
-            
-            showNotification('✅ Order confirmed! WhatsApp messages opening...', 'success');
-        }
-
-        function resetForm() {
-            document.getElementById('orderForm').reset();
-            selectedPaymentMethod = null;
-            selectedUpiMethod = null;
-            qrCodeGenerated = false;
-            
-            document.querySelectorAll('.payment-option, .upi-method').forEach(function(option) { 
-                option.classList.remove('selected'); 
-            });
-            
-            document.getElementById('upiSection').classList.remove('show');
-            document.getElementById('codSection').classList.remove('show');
-            document.getElementById('qrCodeContainer').style.display = 'none';
-            document.getElementById('manualUpiContainer').style.display = 'none';
-            document.getElementById('screenshotUpload').style.display = 'none';
-        }
-
-        function saveCustomerData(customerData) {
-            var existingIndex = savedCustomers.findIndex(function(c) {
-                return c.phone === customerData.phone;
-            });
-
-            if (existingIndex !== -1) {
-                savedCustomers[existingIndex] = Object.assign({}, savedCustomers[existingIndex], customerData, { 
-                    lastOrderDate: new Date().toLocaleDateString('hi-IN') 
-                });
-            } else {
-                customerData.id = Date.now();
-                customerData.lastOrderDate = new Date().toLocaleDateString('hi-IN');
-                savedCustomers.push(customerData);
-            }
-
-            localStorage.setItem('savedCustomers', JSON.stringify(savedCustomers));
-        }
-
-        // सही WhatsApp नंबर के साथ Messages भेजना
-        function sendConfirmationMessages(order) {
-            // Store owner का सही नंबर
-            var storePhone = WHATSAPP_NUMBER; // 9838660814
-            
-            var paymentInfo = '';
-            if (order.paymentMethod === 'upi') {
-                paymentInfo = 'UPI Payment (' + (order.upiMethod === 'qr' ? 'QR Code scan' : 'Manual UPI ID') + ')';
-            } else {
-                paymentInfo = 'Cash on Delivery';
-            }
-
-            var customerMessage = '✅ ORDER CONFIRMED! - SURYANSH DIVYANSH KIRANA STORE\n\n🎉 ' + order.name + ' जी, आपका order confirm हो गया!\n\n📋 Order ID: #' + order.id + '\n📞 Phone: ' + order.phone + '\n📍 Address: ' + order.address + '\n\n🛍️ Items:\n' + order.items + '\n\n💳 Payment: ' + paymentInfo + '\n⏰ Time: ' + order.date + '\n\n📦 Delivery in 30-60 minutes\n👨‍💼 CEO: Mr. Suryansh Mishra\n📞 Contact: +91 ' + storePhone + '\n\nधन्यवाद! 🙏';
-
-            var storeMessage = '🚨 NEW ORDER - SURYANSH DIVYANSH KIRANA STORE\n\n📋 Order #' + order.id + '\n👤 ' + order.name + '\n📞 ' + order.phone + '\n📍 ' + order.address + '\n\n🛍️ Items:\n' + order.items + '\n\n💳 Payment: ' + paymentInfo + '\n⏰ Time: ' + order.date + '\n\n✅ Customer को confirmation भेज दिया गया\n📦 Items pack करके deliver करें\n\n👨‍💼 CEO System: Mr. Suryansh Mishra';
-            
-            // Customer को message (उसके अपने नंबर पर)
-            setTimeout(function() {
-                var customerPhoneClean = order.phone.replace(/\D/g, '');
-                if (customerPhoneClean.length === 10) {
-                    var customerUrl = 'https://wa.me/91' + customerPhoneClean + '?text=' + encodeURIComponent(customerMessage);
-                    window.open(customerUrl, '_blank');
-                    console.log('Customer WhatsApp URL:', customerUrl);
-                } else {
-                    console.error('Invalid customer phone:', order.phone);
-                    showNotification('❌ Customer phone number invalid: ' + order.phone, 'error');
-                }
-                
-                // Store को message (आपके नंबर पर)
-                setTimeout(function() {
-                    var storeUrl = 'https://wa.me/91' + storePhone + '?text=' + encodeURIComponent(storeMessage);
-                    window.open(storeUrl, '_blank');
-                    console.log('Store WhatsApp URL:', storeUrl);
-                }, 2000);
-            }, 1000);
-        }
-
-        function showNotification(message, type) {
-            document.querySelectorAll('.notification').forEach(function(n) { 
-                n.remove(); 
-            });
-            
-            var notification = document.createElement('div');
-            notification.className = 'notification ' + type;
-            notification.textContent = message;
-            
-            document.body.appendChild(notification);
-            
-            setTimeout(function() { 
-                notification.classList.add('show'); 
-            }, 100);
-            
-            setTimeout(function() {
-                notification.classList.remove('show');
-                setTimeout(function() {
-                    if (document.body.contains(notification)) {
-                        document.body.removeChild(notification);
-                    }
-                }, 300);
-            }, 4000);
-        }
-
-        console.log('🎉 COMPLETE SYSTEM READY!');
-        console.log('✅ WhatsApp Number: ' + WHATSAPP_NUMBER);
-        console.log('✅ Phone validation: 10 digits only');
-        console.log('✅ All features working with correct number');
-        console.log('👨‍💼 CEO: Mr. Suryansh Mishra');
-    </script>
-</body>
-</html>
+  window.open(customerUrl, '_blank');
+  setTimeout(() => {
+    window.open(storeUrl, '_blank');
+  }, 1500);
+}
