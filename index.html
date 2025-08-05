@@ -1,120 +1,329 @@
- // Order Form Setup
-function setupOrderForm() {
-  const orderForm = document.getElementById('orderForm');
-  orderForm.addEventListener('submit', function(e) {
-    e.preventDefault();
-    submitOrder();
-  });
-}
+ <!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🛒 SURYANSH DIVYANSH KIRANA STORE - Fixed Number</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', 'Noto Sans Devanagari', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh; color: #333; line-height: 1.6;
+        }
 
-function submitOrder() {
-  const name = document.getElementById('customerName').value.trim();
-  const phoneStr = document.getElementById('customerPhone').value.trim();
-  const address = document.getElementById('customerAddress').value.trim();
-  const items = document.getElementById('orderItems').value.trim();
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
 
-  // Validate all fields
-  if (!name || !phoneStr || !address || !items) {
-    showNotification('❌ सभी फील्ड भरें!', 'error');
-    return;
-  }
+        .store-header {
+            background: rgba(255,255,255,0.95); backdrop-filter: blur(15px);
+            border-radius: 25px; padding: 40px; text-align: center; margin-bottom: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+        }
+        
+        .store-title {
+            font-family: 'Playfair Display', serif; font-size: 3.5em;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            margin-bottom: 15px; font-weight: 700;
+        }
 
-  // Validate exactly 10-digit phone number (string)
-  if (!/^[0-9]{10}$/.test(phoneStr)) {
-    showNotification('❌ फोन नंबर 10 अंक का होना चाहिए!', 'error');
-    document.getElementById('customerPhone').focus();
-    return;
-  }
+        .btn {
+            padding: 15px 30px; margin: 10px; border: none; border-radius: 15px;
+            font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s ease;
+            text-decoration: none; display: inline-block; text-align: center;
+        }
+        
+        .btn-call { background: linear-gradient(135deg, #28a745, #20c997); color: white; }
+        .btn-whatsapp { background: linear-gradient(135deg, #25d366, #128c7e); color: white; }
+        .btn-order { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+        
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
 
-  if (!selectedPaymentMethod) {
-    showNotification('❌ पेमेंट विधि चुनें!', 'error');
-    return;
-  }
+        .products-section {
+            background: rgba(255,255,255,0.95); backdrop-filter: blur(15px);
+            border-radius: 25px; padding: 30px; margin: 30px 0;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+        }
+        
+        .section-title {
+            font-family: 'Playfair Display', serif; font-size: 2.5em;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            text-align: center; margin-bottom: 30px; font-weight: 700;
+        }
 
-  if (selectedPaymentMethod === 'upi') {
-    if (!selectedUpiMethod) {
-      showNotification('❌ UPI विधि चुनें (QR या Manual)!', 'error');
-      return;
-    }
-    const proofFiles = document.getElementById('paymentProof').files;
-    if (proofFiles.length === 0) {
-      showNotification('❌ पेमेंट की रसीद अपलोड करें!', 'error');
-      return;
-    }
-  }
+        .form-group {
+            margin-bottom: 20px;
+        }
 
-  const order = {
-    id: Date.now(),
-    name,
-    phone: phoneStr,         // string ही use हो रहा है
-    address,
-    items,
-    paymentMethod: selectedPaymentMethod,
-    upiMethod: selectedUpiMethod,
-    date: new Date().toLocaleString('hi-IN')
-  };
+        .form-group label {
+            display: block; margin-bottom: 8px; font-weight: 600; color: #333;
+        }
 
-  // Save locally
-  orders.push(order);
-  localStorage.setItem('orders', JSON.stringify(orders));
+        .form-group input, .form-group textarea {
+            width: 100%; padding: 12px 15px; border: 2px solid #ddd;
+            border-radius: 10px; font-size: 16px; transition: border-color 0.3s;
+        }
 
-  // Send WhatsApp messages (string concat)
-  sendConfirmationMessages(order);
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none; border-color: #667eea; box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+        }
 
-  // Reset form
-  orderForm.reset();
-  selectedPaymentMethod = null;
-  selectedUpiMethod = null;
-  qrCodeGenerated = false;
-  document.querySelectorAll('.payment-option, .upi-method').forEach(el => el.classList.remove('selected'));
-  document.getElementById('upiSection').classList.remove('show');
-  document.getElementById('codSection').classList.remove('show');
-  document.getElementById('qrCodeContainer').style.display = 'none';
-  document.getElementById('manualUpiContainer').style.display = 'none';
-  document.getElementById('screenshotUpload').style.display = 'none';
+        .payment-options {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;
+        }
 
-  showNotification('✅ ऑर्डर प्राप्त! WhatsApp ओपन हो रहा है...', 'success');
-}
+        .payment-option {
+            border: 2px solid #ddd; border-radius: 15px; padding: 20px;
+            text-align: center; cursor: pointer; transition: all 0.3s ease;
+        }
 
-function sendConfirmationMessages(order) {
-  const whatsappNumber = '9838660814';  // correct number as string
+        .payment-option:hover { border-color: #667eea; transform: translateY(-2px); }
+        .payment-option.selected { border-color: #667eea; background: rgba(102, 126, 234, 0.1); }
 
-  const paymentInfo = order.paymentMethod === 'upi'
-    ? `UPI (${order.upiMethod})`
-    : 'Cash on Delivery';
+        .upi-section, .cod-section { display: none; margin-top: 20px; padding: 20px; border-radius: 15px; }
+        .upi-section { background: rgba(102, 126, 234, 0.1); }
+        .cod-section { background: rgba(40, 167, 69, 0.1); }
+        .upi-section.show, .cod-section.show { display: block; }
 
-  const customerMsg =
-    `✅ ORDER CONFIRMED! - SURYANSH STORE\n\n` +
-    `नाम: ${order.name}\n` +
-    `फोन: ${order.phone}\n` +
-    `पता: ${order.address}\n\n` +
-    `आइटम्स:\n${order.items}\n\n` +
-    `पेमेंट: ${paymentInfo}\n` +
-    `दिनांक: ${order.date}\n\n` +
-    `धन्यवाद!`;
+        .notification {
+            position: fixed; top: 20px; right: 20px; padding: 15px 20px;
+            border-radius: 10px; color: white; font-weight: 600; z-index: 9999;
+            transform: translateX(400px); transition: transform 0.3s ease;
+        }
+        .notification.success { background: linear-gradient(135deg, #28a745, #20c997); }
+        .notification.error { background: linear-gradient(135deg, #dc3545, #c82333); }
+        .notification.show { transform: translateX(0); }
 
-  const storeMsg =
-    `🚨 नया ऑर्डर आया!\n\n` +
-    `ID: #${order.id}\n` +
-    `नाम: ${order.name}\n` +
-    `फोन: ${order.phone}\n` +
-    `पता: ${order.address}\n\n` +
-    `आइटम्स:\n${order.items}\n\n` +
-    `पेमेंट: ${paymentInfo}\n` +
-    `दिनांक: ${order.date}\n\n` +
-    `कृपया भेज दें।`;
+        @media (max-width: 768px) {
+            .store-title { font-size: 2.5em; }
+            .payment-options { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="store-header">
+            <h1 class="store-title">🛒 SURYANSH DIVYANSH KIRANA STORE</h1>
+            <p style="font-size: 1.3em; color: #666; margin-bottom: 20px;">📍 Gurwalia, Kushinagar, UP 274302</p>
+            <div style="background: rgba(102, 126, 234, 0.1); padding: 15px; border-radius: 15px; margin: 15px 0;">
+                <p><strong>👨‍💼 CEO: Mr. Suryansh Mishra</strong></p>
+                <p style="color: #667eea; font-weight: 600;">📱 WhatsApp: 9838660814</p>
+            </div>
+            
+            <div>
+                <a href="tel:+919838660814" class="btn btn-call">📞 कॉल करें</a>
+                <a href="https://wa.me/919838660814" class="btn btn-whatsapp">💬 WhatsApp</a>
+                <a href="#order-form" class="btn btn-order">🛒 ऑर्डर करें</a>
+            </div>
+        </div>
 
-  // Compose URLs using only string concatenation
-  const customerUrl = 
-    'https://wa.me/91' + order.phone +
-    '?text=' + encodeURIComponent(customerMsg);
+        <div class="products-section" id="order-form">
+            <h2 class="section-title">🛒 Order Form - सही नंबर गारंटी</h2>
+            
+            <form id="orderForm">
+                <div class="form-group">
+                    <label>👤 आपका नाम: *</label>
+                    <input type="text" id="customerName" required placeholder="पूरा नाम लिखें">
+                </div>
+                
+                <div class="form-group">
+                    <label>📞 आपका फोन नंबर: * (सिर्फ 10 अंक)</label>
+                    <input type="tel" id="customerPhone" required 
+                           pattern="[0-9]{10}" maxlength="10" 
+                           placeholder="1234567890 (बिना +91 के)">
+                    <small style="color: #666;">⚠️ सिर्फ 10 अंकों का नंबर डालें, +91 न लगाएं</small>
+                </div>
+                
+                <div class="form-group">
+                    <label>📍 पूरा पता: *</label>
+                    <textarea id="customerAddress" required rows="3" placeholder="गांव, पोस्ट, जिला, पिन कोड"></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>📝 क्या चाहिए: *</label>
+                    <textarea id="orderItems" required rows="4" placeholder="जैसे: चावल 1 किलो, दूध 500ml, चाय पत्ती"></textarea>
+                </div>
 
-  const storeUrl = 
-    'https://wa.me/91' + whatsappNumber +
-    '?text=' + encodeURIComponent(storeMsg);
+                <div class="form-group">
+                    <label>💳 Payment Method:</label>
+                    <div class="payment-options">
+                        <div class="payment-option" data-method="upi" onclick="selectPayment('upi')">
+                            <div style="font-size: 2em;">📱</div>
+                            <div>UPI Payment</div>
+                        </div>
+                        <div class="payment-option" data-method="cod" onclick="selectPayment('cod')">
+                            <div style="font-size: 2em;">💰</div>
+                            <div>Cash on Delivery</div>
+                        </div>
+                    </div>
+                </div>
 
-  window.open(customerUrl, '_blank');
-  setTimeout(() => {
-    window.open(storeUrl, '_blank');
-  }, 1500);
-}
+                <div class="upi-section" id="upiSection">
+                    <h4>📱 UPI Payment</h4>
+                    <p><strong>UPI ID:</strong> sandhnapayday@okhdfcbank</p>
+                    <p>Payment करने के बाद screenshot upload करें:</p>
+                    <input type="file" id="paymentProof" accept="image/*" style="margin-top: 10px;">
+                </div>
+
+                <div class="cod-section" id="codSection">
+                    <h4>💰 Cash on Delivery</h4>
+                    <p>✅ Gurwalia और nearby areas में available</p>
+                    <p>🚚 Delivery charges: Under ₹300 = ₹20, Above ₹300 = FREE</p>
+                </div>
+
+                <button type="submit" class="btn btn-order" style="width: 100%; font-size: 18px; padding: 18px; margin-top: 20px;">
+                    🚀 Order Submit करें
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Fixed WhatsApp Number - हमेशा सही नंबर
+        const STORE_WHATSAPP = '9838660814';
+        
+        let selectedPaymentMethod = null;
+
+        // Payment selection
+        function selectPayment(method) {
+            selectedPaymentMethod = method;
+            
+            document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
+            document.querySelector(`[data-method="${method}"]`).classList.add('selected');
+            
+            document.getElementById('upiSection').classList.toggle('show', method === 'upi');
+            document.getElementById('codSection').classList.toggle('show', method === 'cod');
+        }
+
+        // Form submission
+        document.getElementById('orderForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Get form values AS STRINGS ONLY
+            const customerName = document.getElementById('customerName').value.trim();
+            const customerPhoneString = document.getElementById('customerPhone').value.trim();
+            const customerAddress = document.getElementById('customerAddress').value.trim();
+            const orderItems = document.getElementById('orderItems').value.trim();
+            
+            // Validation
+            if (!customerName || !customerPhoneString || !customerAddress || !orderItems) {
+                showNotification('❌ सभी fields भरना जरूरी है!', 'error');
+                return;
+            }
+            
+            // Phone validation - MUST be exactly 10 digits
+            if (!/^[0-9]{10}$/.test(customerPhoneString)) {
+                showNotification('❌ फोन नंबर सिर्फ 10 अंकों का होना चाहिए!', 'error');
+                document.getElementById('customerPhone').focus();
+                return;
+            }
+            
+            if (!selectedPaymentMethod) {
+                showNotification('❌ Payment method select करें!', 'error');
+                return;
+            }
+            
+            if (selectedPaymentMethod === 'upi') {
+                const proofFile = document.getElementById('paymentProof').files;
+                if (proofFile.length === 0) {
+                    showNotification('❌ Payment screenshot upload करें!', 'error');
+                    return;
+                }
+            }
+            
+            // Create order object
+            const order = {
+                id: Date.now(),
+                name: customerName,
+                phone: customerPhoneString,  // STRING ONLY - NO NUMBER CONVERSION
+                address: customerAddress,
+                items: orderItems,
+                paymentMethod: selectedPaymentMethod,
+                date: new Date().toLocaleString('hi-IN')
+            };
+            
+            // Send WhatsApp messages
+            sendWhatsAppMessages(order);
+            
+            // Reset form
+            this.reset();
+            selectedPaymentMethod = null;
+            document.querySelectorAll('.payment-option').forEach(opt => opt.classList.remove('selected'));
+            document.getElementById('upiSection').classList.remove('show');
+            document.getElementById('codSection').classList.remove('show');
+            
+            showNotification('✅ Order submit हो गया! WhatsApp खुल रहा है...', 'success');
+        });
+
+        function sendWhatsAppMessages(order) {
+            // Payment info
+            const paymentInfo = order.paymentMethod === 'upi' ? 'UPI Payment' : 'Cash on Delivery';
+            
+            // Customer message
+            const customerMessage = 
+                `✅ ORDER CONFIRMED - SURYANSH KIRANA STORE\n\n` +
+                `नाम: ${order.name}\n` +
+                `फोन: ${order.phone}\n` +
+                `पता: ${order.address}\n\n` +
+                `Items:\n${order.items}\n\n` +
+                `Payment: ${paymentInfo}\n` +
+                `Date: ${order.date}\n\n` +
+                `धन्यवाद! 🙏\n` +
+                `📞 Contact: +91 ${STORE_WHATSAPP}`;
+            
+            // Store message
+            const storeMessage = 
+                `🚨 NEW ORDER ALERT\n\n` +
+                `Order ID: #${order.id}\n` +
+                `Customer: ${order.name}\n` +
+                `Phone: ${order.phone}\n` +
+                `Address: ${order.address}\n\n` +
+                `Items:\n${order.items}\n\n` +
+                `Payment: ${paymentInfo}\n` +
+                `Date: ${order.date}\n\n` +
+                `Please prepare and deliver.`;
+            
+            // Create WhatsApp URLs - STRING CONCATENATION ONLY
+            const customerURL = 'https://wa.me/91' + order.phone + '?text=' + encodeURIComponent(customerMessage);
+            const storeURL = 'https://wa.me/91' + STORE_WHATSAPP + '?text=' + encodeURIComponent(storeMessage);
+            
+            // Log URLs for debugging
+            console.log('Customer URL:', customerURL);
+            console.log('Store URL:', storeURL);
+            
+            // Open WhatsApp windows
+            window.open(customerURL, '_blank');
+            setTimeout(() => {
+                window.open(storeURL, '_blank');
+            }, 1500);
+        }
+
+        function showNotification(message, type) {
+            // Remove existing notifications
+            document.querySelectorAll('.notification').forEach(n => n.remove());
+            
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => notification.classList.add('show'), 100);
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, 4000);
+        }
+
+        console.log('🎉 SYSTEM READY!');
+        console.log('✅ Store WhatsApp:', STORE_WHATSAPP);
+        console.log('✅ Phone validation: String only, 10 digits');
+        console.log('✅ No number conversion - URLs will be correct');
+    </script>
+</body>
+</html>
